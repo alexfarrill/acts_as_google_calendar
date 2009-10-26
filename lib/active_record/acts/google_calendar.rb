@@ -61,9 +61,10 @@ module ActiveRecord
       
       # All the methods available to a record that has had <tt>acts_as_google_calendar</tt> specified. 
       module InstanceMethods
-        # override this method to pass different values to the calendar
         def google_calendar_mapping
-          { :title => send(:title), :starts_at => send(:starts_at), :ends_at => send(:ends_at)}
+          # override this method if you want to pass different values to the calendar
+          # check out the GoogleApps documentation for which values are supported
+          { :title => title, :starts_at => starts_at, :ends_at => ends_at}
         end
         
         def google_calendar_after_create
