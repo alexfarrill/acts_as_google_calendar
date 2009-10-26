@@ -1,0 +1,35 @@
+== Requirements
+* GoogleApps gem
+
+== Configuration
+This +acts_as+ extension provides the capabilities for updating a Google Calendar whenever the model is updated.
+The class that has this specified needs to have a +google_calendar_remote_id+ column defined as a string on
+the mapped database table.
+
+Event example:
+  class Event < ActiveRecord::Base
+    acts_as_google_calendar
+    validates_presence_of :title, :starts_at, :ends_at
+  end
+
+  # Create an event in the google calendar
+  event = Event.create! :title => "My cool event", :starts_at => Time.zone.now, :ends_at => 1.hour.from_now
+
+  # Update the event in the calendar
+  event.title = "My best event"
+  event.save
+
+  # Destroy the event in the calendar
+  event.destroy
+
+Configuration options are:
+
+* +column+ - specifies the column name to use for keeping the edit_url of the Google Calendar
+ defaults to :google_calendar_remote_id
+
+* +calendar+ - the title of the calendar you want to update
+ default to :default (the default calendar for your Google Apps account)
+
+NOT SUPPORTED YET:
+* +config+ - a hash of the login credentials you want to use
+ defaults to the environment-specific credentials GoogleApps reads from config/google_apps.yml
