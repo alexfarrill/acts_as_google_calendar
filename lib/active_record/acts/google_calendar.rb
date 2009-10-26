@@ -44,11 +44,11 @@ module ActiveRecord
             include ActiveRecord::Acts::GoogleCalendar::InstanceMethods
             
             def google_calendar_remote_id_column
-              '#{configuration[:column].to_s}'
+              '#{configuration[:column]}'
             end
             
-            def google_calendar_title
-              #{configuration[:calendar]}
+            def google_calendar_to_use
+              '#{configuration[:calendar]}'
             end
             
             after_create :google_calendar_after_create
@@ -98,7 +98,7 @@ module ActiveRecord
         end
         
         def google_calendar
-          if google_calendar_title == :default
+          if google_calendar_to_use == 'default'
             GoogleApps::CalendarsConnection.new.calendars.first
           else
             GoogleApps::CalendarsConnection.new.calendars.detect{|c| c.title == configuration[:calendar]}
