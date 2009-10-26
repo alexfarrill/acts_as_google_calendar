@@ -64,7 +64,7 @@ module ActiveRecord
         def google_calendar_mapping
           # override this method if you want to pass different values to the calendar
           # check out the GoogleApps documentation for which values are supported
-          { :title => title, :starts_at => starts_at, :ends_at => ends_at}
+          { :title => title, :starts_at => starts_at, :ends_at => ends_at }
         end
         
         def google_calendar_after_create

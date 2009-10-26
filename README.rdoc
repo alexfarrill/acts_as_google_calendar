@@ -29,6 +29,28 @@ Configuration options are:
 
 * +calendar+ - the title of the calendar you want to update
  default to :default (the default calendar for your Google Apps account)
+ 
+* Custom mapping to your model
+  def google_calendar_mapping
+    { :title => event_title, :starts_at => starts_at, :ends_at => starts_at + duration, :location => location.name, :description => description }
+  end
+ 
+* Custom create/update/destroy logic
+  def google_calendar_create_conditions
+    # don't create any calendars
+    false
+  end
+  
+  def google_calendar_update_conditions
+    # If true, calendar should be publicized, so create or update it,
+    # IMPORTANT: If false, calendar should not be publicized, so destroy it if it exists
+    publicize?
+  end
+  
+  def google_calendar_destroy_conditions
+    # don't destroy the calendar, even when this object is destroyed
+    false
+  end
 
 NOT SUPPORTED YET:
 * +config+ - a hash of the login credentials you want to use
