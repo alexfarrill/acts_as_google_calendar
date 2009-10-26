@@ -1,6 +1,6 @@
 module ActiveRecord
   module Acts #:nodoc:
-    module List #:nodoc:
+    module GoogleCalendar #:nodoc:
       def self.included(base)
         base.extend(ClassMethods)
       end
@@ -41,10 +41,14 @@ module ActiveRecord
           configuration = { :calendar => :default, :column => :google_calendar_remote_id }
           configuration.update(options) if options.is_a?(Hash)
           class_eval <<-EOV
-            include ActiveRecord::Acts::List::InstanceMethods
+            include ActiveRecord::Acts::GoogleCalendar::InstanceMethods
             
             def google_calendar_remote_id_column
               '#{configuration[:column].to_s}'
+            end
+            
+            def google_calendar_title
+              #{configuration[:calendar]}
             end
             
             after_create :google_calendar_after_create
@@ -52,71 +56,71 @@ module ActiveRecord
             after_destroy :google_calendar_after_destroy
           EOV
         end
+      end
+      
+      # All the methods available to a record that has had <tt>acts_as_google_calendar</tt> specified. 
+      module InstanceMethods
+        # override this method to pass different values to the calendar
+        def google_calendar_mapping
+          { :title => send(title), :starts_at => send(:starts_at), :ends_at => send(:ends_at)}
+        end
         
-        # All the methods available to a record that has had <tt>acts_as_google_calendar</tt> specified. 
-        module InstanceMethods
-          # override this method to pass different values to the calendar
-          def google_calendar_mapping
-            { :title => send(title), :starts_at => send(:starts_at), :ends_at => send(:ends_at)}
-          end
-          
-          def google_calendar_after_create
-            create_google_calendar_event if google_calendar_create_conditions
-          end
+        def google_calendar_after_create
+          create_google_calendar_event if google_calendar_create_conditions
+        end
 
-          def google_calendar_after_update
-            if google_calendar_update_conditions
-              if self.send(google_calendar_remote_id_column).blank?
-                create_google_calendar_event
-              else
-                update_google_calendar_event
-              end
+        def google_calendar_after_update
+          if google_calendar_update_conditions
+            if self.send(google_calendar_remote_id_column).blank?
+              create_google_calendar_event
             else
-              destroy_google_calendar_event if google_calendar_destroy_conditions
+              update_google_calendar_event
             end
+          else
+            destroy_google_calendar_event if google_calendar_destroy_conditions
           end
+        end
 
-          def google_calendar_after_destroy
-            destroy_google_calendar_event
-          end
-          
-          def google_calendar_create_conditions
-            Rails.env != 'test'
-          end
+        def google_calendar_after_destroy
+          destroy_google_calendar_event
+        end
+        
+        def google_calendar_create_conditions
+          Rails.env != 'test'
+        end
 
-          def google_calendar_update_conditions
-            Rails.env != 'test'
-          end
+        def google_calendar_update_conditions
+          Rails.env != 'test'
+        end
 
-          def google_calendar_destroy_conditions
-            Rails.env != 'test' && !self.send(google_calendar_remote_id_column).blank?
+        def google_calendar_destroy_conditions
+          Rails.env != 'test' && !self.send(google_calendar_remote_id_column).blank?
+        end
+        
+        def google_calendar
+          if google_calendar_title == :default
+            GoogleApps::CalendarsConnection.new.calendars.first
+          else
+            GoogleApps::CalendarsConnection.new.calendars.detect{|c| c.title == configuration[:calendar]}
           end
-          
-          def google_calendar
-            if configuration[:calendar] == :default
-              GoogleApps::CalendarsConnection.new.calendars.first
-            else
-              GoogleApps::CalendarsConnection.new.calendars.detect{|c| c.title == configuration[:calendar]}
-            end
-          end
+        end
 
-          def create_google_calendar_event
-            calendar_event = google_calendar.create_event! :title => google_docs_title,
-              :description => google_docs_description,
-              :location => google_docs_location,
-              :starts_at => starts_at,
-              :ends_at => ends_at
+        def create_google_calendar_event
+          calendar_event = google_calendar.create_event! :title => google_docs_title,
+            :description => google_docs_description,
+            :location => google_docs_location,
+            :starts_at => starts_at,
+            :ends_at => ends_at
 
-            self.update_attribute self.send(google_calendar_remote_id_column), calendar_event.edit_url
-          end
+          self.update_attribute self.send(google_calendar_remote_id_column), calendar_event.edit_url
+        end
 
-          def update_google_calendar_event
-            GoogleCalendarEvent.new(:edit_url => self.send(google_calendar_remote_id_column)).update! *google_calendar_mapping
-          end
+        def update_google_calendar_event
+          GoogleCalendarEvent.new(:edit_url => self.send(google_calendar_remote_id_column)).update! *google_calendar_mapping
+        end
 
-          def destroy_google_calendar_event
-            GoogleCalendarEvent.new(:edit_url => self.send(google_calendar_remote_id_column)).destroy if google_calendar_destroy_condition
-          end
+        def destroy_google_calendar_event
+          GoogleCalendarEvent.new(:edit_url => self.send(google_calendar_remote_id_column)).destroy if google_calendar_destroy_condition
         end
       end
     end
