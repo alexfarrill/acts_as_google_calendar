@@ -41,6 +41,7 @@ module ActiveRecord
           configuration = { :calendar => :default, :column => :google_calendar_remote_id }
           configuration.update(options) if options.is_a?(Hash)
           class_eval <<-EOV
+            require 'google_apps'
             include ActiveRecord::Acts::GoogleCalendar::InstanceMethods
             
             def google_calendar_remote_id_column
@@ -107,7 +108,7 @@ module ActiveRecord
 
         def create_google_calendar_event
           calendar_event = google_calendar.create_event! google_calendar_mapping
-          self.update_attribute self.send(google_calendar_remote_id_column), calendar_event.edit_url
+          self.update_attribute google_calendar_remote_id_column, calendar_event.edit_url
         end
 
         def update_google_calendar_event
@@ -115,7 +116,7 @@ module ActiveRecord
         end
 
         def destroy_google_calendar_event
-          GoogleCalendarEvent.new(:edit_url => self.send(google_calendar_remote_id_column)).destroy if google_calendar_destroy_condition
+          GoogleCalendarEvent.new(:edit_url => self.send(google_calendar_remote_id_column)).destroy if google_calendar_destroy_conditions
         end
       end
     end
