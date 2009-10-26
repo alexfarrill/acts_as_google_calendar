@@ -62,7 +62,7 @@ module ActiveRecord
       module InstanceMethods
         # override this method to pass different values to the calendar
         def google_calendar_mapping
-          { :title => send(title), :starts_at => send(:starts_at), :ends_at => send(:ends_at)}
+          { :title => send(:title), :starts_at => send(:starts_at), :ends_at => send(:ends_at)}
         end
         
         def google_calendar_after_create
@@ -106,17 +106,12 @@ module ActiveRecord
         end
 
         def create_google_calendar_event
-          calendar_event = google_calendar.create_event! :title => google_docs_title,
-            :description => google_docs_description,
-            :location => google_docs_location,
-            :starts_at => starts_at,
-            :ends_at => ends_at
-
+          calendar_event = google_calendar.create_event! google_calendar_mapping
           self.update_attribute self.send(google_calendar_remote_id_column), calendar_event.edit_url
         end
 
         def update_google_calendar_event
-          GoogleCalendarEvent.new(:edit_url => self.send(google_calendar_remote_id_column)).update! *google_calendar_mapping
+          GoogleCalendarEvent.new(:edit_url => self.send(google_calendar_remote_id_column)).update! google_calendar_mapping
         end
 
         def destroy_google_calendar_event
